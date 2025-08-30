@@ -3,7 +3,7 @@ local platform = require("utils.platform")
 local options = {
     default_prog = {},
     launch_menu = {},
-    -- default_gui_startup_args = { 'connect', 'unix' },
+    -- default_gui_startup_args = { "connect", "unix" },
 }
 
 if platform.is_win then

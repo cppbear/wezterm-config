@@ -4,11 +4,11 @@ return {
     prefer_egl = true,
 
     -- color scheme
-    color_scheme = 'Campbell (Gogh)',
+    color_scheme = "Campbell (Gogh)",
 
     -- background
     window_background_opacity = 0.7,
-    win32_system_backdrop = 'Acrylic',
+    win32_system_backdrop = "Acrylic",
 
     -- scrollbar
     enable_scroll_bar = true,
