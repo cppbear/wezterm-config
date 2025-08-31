@@ -10,6 +10,7 @@ return {
     -- If below not working,try method in https://github.com/wezterm/wezterm/issues/4145#issuecomment-2976018801
     window_background_opacity = 0.7,
     win32_system_backdrop = "Acrylic",
+    macos_window_background_blur = 70,
 
     -- scrollbar
     enable_scroll_bar = true,
