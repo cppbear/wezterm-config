@@ -1,0 +1,15 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CLASSES_ROOT\Directory\shell\WezTerm]
+@="在 WezTerm 中打开"
+"Icon"="D:\\UserProgram\\WezTerm\\wezterm-gui.exe"
+
+[HKEY_CLASSES_ROOT\Directory\shell\WezTerm\command]
+@="\"D:\\UserProgram\\WezTerm\\wezterm-gui.exe\" start --no-auto-connect --cwd \"%v\""
+
+[HKEY_CLASSES_ROOT\Directory\Background\shell\WezTerm]
+@="在 WezTerm 中打开"
+"Icon"="D:\\UserProgram\\WezTerm\\wezterm-gui.exe"
+
+[HKEY_CLASSES_ROOT\Directory\Background\shell\WezTerm\command]
+@="\"D:\\UserProgram\\WezTerm\\wezterm-gui.exe\" start --no-auto-connect --cwd \"%v\""
