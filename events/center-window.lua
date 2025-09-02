@@ -1,5 +1,4 @@
 local wezterm = require("wezterm")
--- local math = require("utils.math")
 local M = {}
 
 local DOMAIN_DELAY = 85

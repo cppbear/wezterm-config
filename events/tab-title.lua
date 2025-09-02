@@ -1,15 +1,20 @@
 local wezterm = require("wezterm")
+local platform = require("utils.platform")
+local nf = wezterm.nerdfonts
 
 -- Inspired by https://github.com/wez/wezterm/discussions/628#discussioncomment-1874614
 
-local GLYPH_SEMI_CIRCLE_LEFT = ""
--- local GLYPH_SEMI_CIRCLE_LEFT = utf8.char(0xe0b6)
-local GLYPH_SEMI_CIRCLE_RIGHT = ""
--- local GLYPH_SEMI_CIRCLE_RIGHT = utf8.char(0xe0b4)
-local GLYPH_CIRCLE = "󰇷 "
--- local GLYPH_CIRCLE = utf8.char(0xf111)
-local GLYPH_ADMIN = "󰖳 "
--- local GLYPH_ADMIN = utf8.char(0xfc7e)
+local GLYPH_SEMI_CIRCLE_LEFT = nf.ple_left_half_circle_thick --[[  ]]
+local GLYPH_SEMI_CIRCLE_RIGHT = nf.ple_right_half_circle_thick --[[  ]]
+local GLYPH_CIRCLE = nf.fa_circle --[[  ]]
+local GLYPH_ADMIN = nf.md_shield_half_full --[[ 󰞀 ]]
+local GLYPH_WINDOWS = nf.fa_windows --[[  ]]
+local GLYPH_LINUX = nf.cod_terminal_linux --[[  ]]
+local GLYPH_MAC = nf.fa_apple --[[  ]]
+local GLYPH_DEBUG = nf.fa_bug --[[  ]]
+local GLYPH_TERMINAL = nf.fa_terminal --[[  ]]
+local GLYPH_PWSH = nf.md_powershell --[[ 󰨊 ]]
+local GLYPH_CMD = nf.cod_terminal_cmd --[[  ]]
 
 local M = {}
 
@@ -31,21 +36,47 @@ M.colors = {
     },
 }
 
-M.set_process_name = function(s)
+M.get_process_name = function(s)
     local a = string.gsub(s, "(.*[/\\])(.*)", "%2")
-    return a:gsub("%.exe$", "")
+    return a:gsub("%.[eE][xX][eE]$", "")
 end
 
-M.set_title = function(process_name, static_title, active_title, max_width, inset)
+local process_name_map = {
+    ["cmd"] = GLYPH_CMD .. "  Cmd",
+    ["pwsh"] = GLYPH_PWSH .. "  PowerShell",
+    ["powershell"] = GLYPH_PWSH .. "  PowerShell",
+    ["zsh"] = "Zsh",
+    ["bash"] = "Bash",
+    ["wslhost"] = "WSL",
+}
+
+M.set_title = function(process_name, static_title, active_title, max_width, is_wsl, inset)
     local title
-    inset = inset or 6
 
     if process_name:len() > 0 and static_title:len() == 0 then
-        title = "  " .. process_name .. " ~ " .. " "
+        process_name = process_name_map[process_name] or process_name
+        if platform.is_win then
+            if is_wsl then
+                title = GLYPH_LINUX .. "  " .. process_name
+            else
+                title = process_name
+            end
+        elseif platform.is_linux then
+            title = GLYPH_LINUX .. "  " .. process_name
+        elseif platform.is_mac then
+            title = GLYPH_MAC .. "  " .. process_name
+        end
     elseif static_title:len() > 0 then
-        title = "󰌪  " .. static_title .. " ~ " .. " "
+        title = static_title
     else
-        title = "󰌽  " .. active_title .. " ~ " .. " "
+        if active_title == "Debug" then
+            title = GLYPH_DEBUG .. "  DEBUG"
+        elseif active_title == "wezterm" then
+            title = GLYPH_TERMINAL .. "  WezTerm"
+        else
+            local active_name = M.get_process_name(active_title)
+            title = process_name_map[active_name] or active_name
+        end
     end
 
     if title:len() > max_width - inset then
@@ -57,7 +88,14 @@ M.set_title = function(process_name, static_title, active_title, max_width, inse
 end
 
 M.check_if_admin = function(p)
-    if p:match("^Administrator: ") then
+    if p:match("^Administrator: ") or p:match('(Admin)') then
+        return true
+    end
+    return false
+end
+
+M.check_if_wsl = function(p)
+    if p:match("^wsl") then
         return true
     end
     return false
@@ -80,9 +118,9 @@ M.setup = function()
 
         local bg
         local fg
-        local process_name = M.set_process_name(tab.active_pane.foreground_process_name)
+        local process_name = M.get_process_name(tab.active_pane.foreground_process_name)
         local is_admin = M.check_if_admin(tab.active_pane.title)
-        local title = M.set_title(process_name, tab.tab_title, tab.active_pane.title, max_width, (is_admin and 8))
+        local is_wsl = M.check_if_wsl(process_name)
 
         if tab.is_active then
             bg = M.colors.is_active.bg
@@ -102,6 +140,16 @@ M.setup = function()
                 break
             end
         end
+
+        local inset = 4
+        if is_admin then
+            inset = inset + 2
+        end
+        if has_unseen_output then
+            inset = inset + 2
+        end
+
+        local title = M.set_title(process_name, tab.tab_title, tab.active_pane.title, max_width, is_wsl, inset)
 
         -- Left semi-circle
         M.push(fg, bg, { Intensity = "Bold" }, GLYPH_SEMI_CIRCLE_LEFT)
