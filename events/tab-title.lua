@@ -11,6 +11,7 @@ local GLYPH_ADMIN = nf.md_shield_half_full --[[ 󰞀 ]]
 local GLYPH_WINDOWS = nf.fa_windows --[[  ]]
 local GLYPH_LINUX = nf.cod_terminal_linux --[[  ]]
 local GLYPH_MAC = nf.fa_apple --[[  ]]
+local GLYPH_FILTER = nf.md_filter --[[ 󰈲 ]]
 local GLYPH_DEBUG = nf.fa_bug --[[  ]]
 local GLYPH_TERMINAL = nf.fa_terminal --[[  ]]
 local GLYPH_PWSH = nf.md_powershell --[[ 󰨊 ]]
@@ -74,8 +75,12 @@ M.set_title = function(process_name, static_title, active_title, max_width, is_w
         elseif active_title == "wezterm" then
             title = GLYPH_TERMINAL .. "  WezTerm"
         else
-            local active_name = M.get_process_name(active_title)
-            title = process_name_map[active_name] or active_name
+            if active_title == GLYPH_FILTER .. " Select/Search:" then
+                title = active_title
+            else
+                local active_name = M.get_process_name(active_title)
+                title = process_name_map[active_name] or active_name
+            end
         end
     end
 
