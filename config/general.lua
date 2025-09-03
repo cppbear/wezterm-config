@@ -7,4 +7,7 @@ return {
 
     -- scrollbar
     scrollback_lines = 9000,
+
+    -- debug
+    -- debug_key_events = true,
 }

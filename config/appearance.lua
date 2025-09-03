@@ -1,3 +1,7 @@
+local platform = require("utils.platform")
+
+local window_decorations = platform.is_mac and "TITLE|RESIZE" or "INTEGRATED_BUTTONS|RESIZE"
+
 return {
     front_end = "WebGpu",
     webgpu_power_preference = "HighPerformance",
@@ -36,7 +40,7 @@ return {
 
     -- window
     adjust_window_size_when_changing_font_size = false,
-    window_decorations = "INTEGRATED_BUTTONS|RESIZE",
+    window_decorations = window_decorations,
     -- window_padding = {
     --     left = 5,
     --     right = 10,
