@@ -14,7 +14,7 @@ M.setup = function()
             window:perform_action(
                 wezterm.action.ShowLauncherArgs({
                     title = GLYPH_FILTER .. " Select/Search:",
-                    flags = "FUZZY|LAUNCH_MENU_ITEMS|DOMAINS",
+                    flags = "FUZZY|LAUNCH_MENU_ITEMS|DOMAINS|WORKSPACES",
                 }),
                 pane
             )
