@@ -8,6 +8,9 @@ return {
     -- scrollbar
     scrollback_lines = 9000,
 
+    -- ref: https://github.com/wezterm/wezterm/issues/6645#issuecomment-3117072387
+    enable_wayland = false,
+
     -- debug
     -- debug_key_events = true,
 }

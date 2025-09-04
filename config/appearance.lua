@@ -1,6 +1,8 @@
 local platform = require("utils.platform")
 
-local window_decorations = platform.is_mac and "TITLE|RESIZE" or "INTEGRATED_BUTTONS|RESIZE"
+-- ref: https://github.com/wezterm/wezterm/pull/7095
+local window_decorations = platform.is_win and "INTEGRATED_BUTTONS|RESIZE" or "TITLE|RESIZE"
+local window_background_opacity = platform.is_linux and 1 or 0.7
 
 return {
     front_end = "WebGpu",
@@ -11,8 +13,8 @@ return {
     color_scheme = "Campbell (Gogh)",
 
     -- background
-    -- If below not working,try method in https://github.com/wezterm/wezterm/issues/4145#issuecomment-2976018801
-    window_background_opacity = 0.7,
+    -- If below not working in Windows,try method in https://github.com/wezterm/wezterm/issues/4145#issuecomment-2976018801
+    window_background_opacity = window_background_opacity,
     win32_system_backdrop = "Acrylic",
     macos_window_background_blur = 70,
 
