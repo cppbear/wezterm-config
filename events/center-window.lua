@@ -1,8 +1,7 @@
 local wezterm = require("wezterm")
 local M = {}
 
-local DOMAIN_DELAY = 85
-local DELAY = 15
+local DELAY = 100
 
 -- ref: https://github.com/wezterm/wezterm/discussions/5578#discussioncomment-10579542
 M.center_window_once = function(window)
@@ -15,23 +14,23 @@ M.center_window_once = function(window)
 
     local screen = wezterm.gui.screens().active
 
-    -- Need another delay if connecting to a domain
-    wezterm.sleep_ms(DOMAIN_DELAY)
-
-    local width = screen.width * 0.85
-    local height = screen.height * 0.85
-    window:set_inner_size(width, height)
-
-    -- Short delay to allow the window to resize
+    -- Need a delay if connecting to a domain
     wezterm.sleep_ms(DELAY)
 
+    local width = math.floor(screen.width * 0.85)
+    local height = math.floor(screen.height * 0.85)
+    window:set_inner_size(width, height)
+
     local dimensions = window:get_dimensions()
+    while dimensions.pixel_width ~= width do
+        dimensions = window:get_dimensions()
+    end
+
     local x = screen.x + (screen.width - dimensions.pixel_width) * 0.5
     local y = screen.y + (screen.height - dimensions.pixel_height) * 0.5
+    window:set_position(x, y)
 
     wezterm.GLOBAL.windows_centered[window_id] = true
-
-    window:set_position(x, y)
 end
 
 M.setup = function()
