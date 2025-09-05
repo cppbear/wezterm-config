@@ -16,6 +16,26 @@ local GLYPH_DEBUG = nf.fa_bug --[[  ]]
 local GLYPH_TERMINAL = nf.fa_terminal --[[  ]]
 local GLYPH_PWSH = nf.md_powershell --[[ 󰨊 ]]
 local GLYPH_CMD = nf.cod_terminal_cmd --[[  ]]
+local PCT_GLYPHS = {
+    nf.md_checkbox_blank_circle_outline, -- [[ 󰄰 ]]
+    nf.md_circle_slice_1,                -- [[ 󰪞 ]]
+    nf.md_circle_slice_2,                -- [[ 󰪟 ]]
+    nf.md_circle_slice_3,                -- [[ 󰪠 ]]
+    nf.md_circle_slice_4,                -- [[ 󰪡 ]]
+    nf.md_circle_slice_5,                -- [[ 󰪢 ]]
+    nf.md_circle_slice_6,                -- [[ 󰪣 ]]
+    nf.md_circle_slice_7,                -- [[ 󰪤 ]]
+    nf.md_circle_slice_8,                -- [[ 󰪥 ]]
+}
+
+local process_name_map = {
+    ["cmd"] = GLYPH_CMD .. "  Cmd",
+    ["pwsh"] = GLYPH_PWSH .. "  PowerShell",
+    ["powershell"] = GLYPH_PWSH .. "  PowerShell",
+    ["zsh"] = "Zsh",
+    ["bash"] = "Bash",
+    ["wslhost"] = "WSL",
+}
 
 local M = {}
 
@@ -37,19 +57,36 @@ M.colors = {
     },
 }
 
+M.pct_glyph = function(pct)
+    pct = math.floor(pct)
+
+    if pct >= 0 and pct <= 5 then
+        return PCT_GLYPHS[1] -- empty circle
+    elseif pct >= 6 and pct <= 18 then
+        return PCT_GLYPHS[2] -- centered at 12 (slightly smaller than 12.5)
+    elseif pct >= 19 and pct <= 31 then
+        return PCT_GLYPHS[3] -- centered at 25
+    elseif pct >= 32 and pct <= 43 then
+        return PCT_GLYPHS[4] -- centered at 37.5
+    elseif pct >= 44 and pct <= 56 then
+        return PCT_GLYPHS[5] -- half-filled circle, centered at 50
+    elseif pct >= 57 and pct <= 68 then
+        return PCT_GLYPHS[6] -- centered at 62.5
+    elseif pct >= 69 and pct <= 81 then
+        return PCT_GLYPHS[7] -- centered at 75
+    elseif pct >= 82 and pct <= 94 then
+        return PCT_GLYPHS[8] -- centered at 88 (slightly larger than 87.5)
+    elseif pct >= 95 and pct <= 100 then
+        return PCT_GLYPHS[9] -- filled circle
+    else
+        return PCT_GLYPHS[9]
+    end
+end
+
 M.get_process_name = function(s)
     local a = string.gsub(s, "(.*[/\\])(.*)", "%2")
     return a:gsub("%.[eE][xX][eE]$", "")
 end
-
-local process_name_map = {
-    ["cmd"] = GLYPH_CMD .. "  Cmd",
-    ["pwsh"] = GLYPH_PWSH .. "  PowerShell",
-    ["powershell"] = GLYPH_PWSH .. "  PowerShell",
-    ["zsh"] = "Zsh",
-    ["bash"] = "Bash",
-    ["wslhost"] = "WSL",
-}
 
 M.set_title = function(process_name, static_title, active_title, max_width, is_wsl, inset)
     local title
@@ -106,6 +143,55 @@ M.check_if_wsl = function(p)
     return false
 end
 
+M.tab_colors = function(tab, hover)
+    local bg, fg
+    if tab.is_active then
+        bg = M.colors.is_active.bg
+        fg = M.colors.is_active.fg
+    elseif hover then
+        bg = M.colors.hover.bg
+        fg = M.colors.hover.fg
+    else
+        bg = M.colors.default.bg
+        fg = M.colors.default.fg
+    end
+    return bg, fg
+end
+
+M.progress = function(tab)
+    local status, color
+    local progress = tab.active_pane.progress or 'None'
+
+    if progress ~= "None" then
+        color = "#FFC107" -- "#2196F3" "#007bff" "#4CAF50" "#28a745"
+        if progress.Percentage ~= nil then
+            status = M.pct_glyph(progress.Percentage)
+        elseif progress.Error ~= nil then
+            status = M.pct_glyph(progress.Error)
+            color = "#F44336"
+        end
+    end
+
+    return status, color
+end
+
+M.tab_title = function(tab, max_width, is_admin, has_progress, has_unseen_output)
+    local process_name = M.get_process_name(tab.active_pane.foreground_process_name)
+    local is_wsl = M.check_if_wsl(process_name)
+    local inset = 4
+    if is_admin then
+        inset = inset + 2
+    end
+    if has_progress then
+        inset = inset + 3
+    end
+    if has_unseen_output then
+        inset = inset + 3
+    end
+
+    return M.set_title(process_name, tab.tab_title, tab.active_pane.title, max_width, is_wsl, inset)
+end
+
 ---@param fg string
 ---@param bg string
 ---@param attribute table
@@ -115,29 +201,17 @@ M.push = function(bg, fg, attribute, text)
     table.insert(M.cells, { Foreground = { Color = fg } })
     table.insert(M.cells, { Attribute = attribute })
     table.insert(M.cells, { Text = text })
+    table.insert(M.cells, "ResetAttributes")
 end
 
 M.setup = function()
     wezterm.on("format-tab-title", function(tab, tabs, panes, config, hover, max_width)
         M.cells = {}
 
-        local bg
-        local fg
-        local process_name = M.get_process_name(tab.active_pane.foreground_process_name)
+        local bg, fg = M.tab_colors(tab, hover)
         local is_admin = M.check_if_admin(tab.active_pane.title)
-        local is_wsl = M.check_if_wsl(process_name)
-
-        if tab.is_active then
-            bg = M.colors.is_active.bg
-            fg = M.colors.is_active.fg
-        elseif hover then
-            bg = M.colors.hover.bg
-            fg = M.colors.hover.fg
-        else
-            bg = M.colors.default.bg
-            fg = M.colors.default.fg
-        end
-
+        local progress, progress_color = M.progress(tab)
+        local has_progress = progress ~= nil
         local has_unseen_output = false
         for _, pane in ipairs(tab.panes) do
             if pane.has_unseen_output then
@@ -146,15 +220,7 @@ M.setup = function()
             end
         end
 
-        local inset = 4
-        if is_admin then
-            inset = inset + 2
-        end
-        if has_unseen_output then
-            inset = inset + 2
-        end
-
-        local title = M.set_title(process_name, tab.tab_title, tab.active_pane.title, max_width, is_wsl, inset)
+        local title = M.tab_title(tab, max_width, is_admin, has_progress, has_unseen_output)
 
         -- Left semi-circle
         M.push(fg, bg, { Intensity = "Bold" }, GLYPH_SEMI_CIRCLE_LEFT)
@@ -164,12 +230,17 @@ M.setup = function()
             M.push(bg, fg, { Intensity = "Bold" }, " " .. GLYPH_ADMIN)
         end
 
+        -- Progress
+        if has_progress then
+            M.push(bg, progress_color or fg, { Intensity = "Bold" }, " " .. progress .. " ")
+        end
+
         -- Title
         M.push(bg, fg, { Intensity = "Bold" }, " " .. title)
 
         -- Unseen output alert
         if has_unseen_output then
-            M.push(bg, "#FF3B8B", { Intensity = "Bold" }, " " .. GLYPH_CIRCLE)
+            M.push(bg, "#FF3B8B", { Intensity = "Bold" }, " " .. GLYPH_CIRCLE .. " ")
         end
 
         -- Right padding
